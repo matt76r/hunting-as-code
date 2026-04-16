@@ -1,6 +1,6 @@
-# Code owners for HaC repo
-# All changes require review from the security team
-
+# Global owner — all changes require review
 * @matt76r
+
+# Sigma rules and active hunts require explicit sign-off
 sigma/ @matt76r
 hunts/active/ @matt76r
