@@ -1,0 +1,6 @@
+# Code owners for HaC repo
+# All changes require review from the security team
+
+* @matt76r
+sigma/ @matt76r
+hunts/active/ @matt76r
