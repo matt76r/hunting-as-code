@@ -1,0 +1,27 @@
+name: Validate Sigma Rules
+
+on:
+  pull_request:
+    paths:
+      - 'sigma/**'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install sigma-cli
+        run: pip install sigma-cli
+
+      - name: Validate Sigma rules
+        run: |
+          find sigma/ -name '*.yml' | while read rule; do
+            echo "Validating: $rule"
+            sigma check "$rule"
+          done
