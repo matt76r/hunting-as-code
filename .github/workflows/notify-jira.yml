@@ -1,0 +1,44 @@
+name: Notify Jira
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, closed]
+
+jobs:
+  update-jira:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract Jira ticket from branch
+        id: extract
+        run: |
+          BRANCH="${GITHUB_HEAD_REF}"
+          TICKET=$(echo "$BRANCH" | grep -oP 'HAC-[0-9]+' || true)
+          echo "ticket=$TICKET" >> $GITHUB_OUTPUT
+
+      - name: Move to PEER REVIEW on PR open
+        if: github.event.action == 'opened' && steps.extract.outputs.ticket != ''
+        env:
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_TRANSITION: ${{ secrets.JIRA_TRANSITION_PEER_REVIEW }}
+          TICKET: ${{ steps.extract.outputs.ticket }}
+        run: |
+          curl -s -X POST \
+            -u "$JIRA_EMAIL:$JIRA_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data "{\"transition\": {\"id\": \"$JIRA_TRANSITION\"}}" \
+            "https://yavinsecurity.atlassian.net/rest/api/3/issue/$TICKET/transitions"
+
+      - name: Move to PROMOTED on PR merge
+        if: github.event.action == 'closed' && github.event.pull_request.merged == true && steps.extract.outputs.ticket != ''
+        env:
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_TRANSITION: ${{ secrets.JIRA_TRANSITION_PROMOTED }}
+          TICKET: ${{ steps.extract.outputs.ticket }}
+        run: |
+          curl -s -X POST \
+            -u "$JIRA_EMAIL:$JIRA_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data "{\"transition\": {\"id\": \"$JIRA_TRANSITION\"}}" \
+            "https://yavinsecurity.atlassian.net/rest/api/3/issue/$TICKET/transitions"
