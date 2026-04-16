@@ -1,0 +1,30 @@
+name: Validate Queries
+
+on:
+  pull_request:
+    paths:
+      - 'queries/**'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check query files are not empty
+        run: |
+          find queries/ -type f \( -name '*.spl' -o -name '*.kql' -o -name '*.sql' \) | while read qfile; do
+            if [ ! -s "$qfile" ]; then
+              echo "ERROR: Empty query file: $qfile"
+              exit 1
+            fi
+            echo "OK: $qfile"
+          done
+
+      - name: Check for placeholder text
+        run: |
+          find queries/ -type f \( -name '*.spl' -o -name '*.kql' -o -name '*.sql' \) | while read qfile; do
+            if grep -qi 'TODO\|PLACEHOLDER\|YOUR_QUERY_HERE' "$qfile"; then
+              echo "WARNING: Placeholder text found in $qfile"
+            fi
+          done || true
